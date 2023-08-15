@@ -1,0 +1,13 @@
+services:
+  postgres:
+    image: postgres
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: adir12345
+      POSTGRES_DB: auctions
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+volumes:
+  pgdata:
