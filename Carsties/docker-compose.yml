@@ -4,9 +4,9 @@ services:
     ports:
       - 5432:5432
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: adir12345
-      POSTGRES_DB: auctions
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=adir12345
+      - POSTGRES_DB=auctions
     volumes:
       - pgdata:/var/lib/postgresql/data
   mongodb:
@@ -14,8 +14,8 @@ services:
     ports:
       - 27017:27017
     environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: adir12345
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=adir12345
     volumes:
       - mongodata:/var/lib/mongodb/data
 volumes:
