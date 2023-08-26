@@ -8,6 +8,7 @@ using AutoMapper;
 using AuctionService.DTOs;
 using Microsoft.EntityFrameworkCore;
 using AuctionService.Entities;
+using AutoMapper.QueryableExtensions;
 
 namespace AuctionService.Controllers
 {
@@ -18,7 +19,7 @@ namespace AuctionService.Controllers
         private readonly AuctionDbContext _context;
         private readonly IMapper _mapper;
 
-        public AuctionsController(AuctionDbContext context, IMapper mapper) 
+        public AuctionsController(AuctionDbContext context, IMapper mapper)
         {
             _context = context;
             _mapper = mapper;
@@ -26,11 +27,21 @@ namespace AuctionService.Controllers
 
         // Get all auctions
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<AuctionDto>>> GetAllAuctions()
+        public async Task<ActionResult<IEnumerable<AuctionDto>>> GetAllAuctions(string date)
         {
-            var auctions = await _context.Auctions.Include(x => x.Item).OrderBy(x => x.Item.Make).ToListAsync();
+            // date = auction date
+            // We use 'AsQueryable' to enables to make more than one query over this data we got from the db, before outputing the result
+            var query = _context.Auctions.OrderBy(x => x.Item.Make).AsQueryable();
 
-            return Ok(_mapper.Map<List<AuctionDto>>(auctions));
+            if (!string.IsNullOrEmpty(date))
+            {
+                // Get all new auctions, meaning auctions that are created(or updated) after the date that was passed in the query string
+                query = query.Where(x => x.UpdatedAt.CompareTo(DateTime.Parse(date).ToUniversalTime()) > 0);
+            }
+
+            // ProjectTo is a method from AutoMapper, that will map the query result to the AuctionDto. Afterwards we return the new auctions as list of auctions DTOs 
+            return await query.ProjectTo<AuctionDto>(_mapper.ConfigurationProvider).ToListAsync();
+
         }
 
         // Get individual auction
@@ -69,7 +80,7 @@ namespace AuctionService.Controllers
             // return the auction location
             return CreatedAtAction(nameof(GetAuctionById), new { id = auctionDto.Id }, auctionDto);
 
-            
+
         }
 
         [HttpPut("{id}")]
@@ -88,7 +99,7 @@ namespace AuctionService.Controllers
             auction.Item.Model = updateAuctionDto.Model ?? auction.Item.Model;
             auction.Item.Color = updateAuctionDto.Color ?? auction.Item.Color;
             auction.Item.Mileage = updateAuctionDto.Mileage ?? auction.Item.Mileage;
-            auction.Item.Year = updateAuctionDto.Year ?? auction.Item.Year;  
+            auction.Item.Year = updateAuctionDto.Year ?? auction.Item.Year;
 
 
             var result = await _context.SaveChangesAsync() > 0;
@@ -117,8 +128,8 @@ namespace AuctionService.Controllers
             if (!result) return BadRequest("Failed to save changes to the DB");
 
             return Ok();
-            
+
 
         }
-}
+    }
 }

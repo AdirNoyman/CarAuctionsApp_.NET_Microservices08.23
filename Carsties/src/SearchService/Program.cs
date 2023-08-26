@@ -2,12 +2,14 @@ using MongoDB.Driver;
 using MongoDB.Entities;
 using SearchService.Data;
 using SearchService.Models;
+using SearchService.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
+// Register services
 builder.Services.AddControllers();
+builder.Services.AddHttpClient<AuctionServiceHttpClient>();
 
 var app = builder.Build();
 
@@ -19,10 +21,11 @@ app.UseAuthorization();
 app.MapControllers();
 
 // Initialize the MongoDB database
-try {
+try
+{
 
     await DbInitilaizer.InitDb(app);
-    
+
 }
 catch (Exception e)
 {
