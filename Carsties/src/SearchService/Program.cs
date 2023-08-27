@@ -1,5 +1,8 @@
+using System.Net;
 using MongoDB.Driver;
 using MongoDB.Entities;
+using Polly;
+using Polly.Extensions.Http;
 using SearchService.Data;
 using SearchService.Models;
 using SearchService.Services;
@@ -9,7 +12,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 // Register services
 builder.Services.AddControllers();
-builder.Services.AddHttpClient<AuctionServiceHttpClient>();
+builder.Services.AddHttpClient<AuctionServiceHttpClient>().AddPolicyHandler(GetRetryPolicy());
 
 var app = builder.Build();
 
@@ -20,16 +23,27 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// Initialize the MongoDB database
-try
+// Start and run the Search app even if the Auction service is not available at that time (of starting).
+app.Lifetime.ApplicationStarted.Register(async () =>
 {
+    // Initialize the MongoDB database
+    try
+    {
 
-    await DbInitilaizer.InitDb(app);
+        await DbInitilaizer.InitDb(app);
 
-}
-catch (Exception e)
-{
-    Console.WriteLine("Error initilazing the mongoDB database 😩", e);
-}
+    }
+    catch (Exception e)
+    {
+        Console.WriteLine("Error initilazing the mongoDB database 😩", e);
+    }
+
+});
 
 app.Run();
+
+// Handle http request retry to get the data from the Auction service
+// Keep trying every 3 seconds until we get an ok response
+static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy() => HttpPolicyExtensions.HandleTransientHttpError()
+    .OrResult(msg => msg.StatusCode == HttpStatusCode.NotFound)
+    .WaitAndRetryForeverAsync(_ => TimeSpan.FromSeconds(3));

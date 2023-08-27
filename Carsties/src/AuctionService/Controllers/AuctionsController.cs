@@ -33,6 +33,8 @@ namespace AuctionService.Controllers
             // We use 'AsQueryable' to enables to make more than one query over this data we got from the db, before outputing the result
             var query = _context.Auctions.OrderBy(x => x.Item.Make).AsQueryable();
 
+            Console.WriteLine("Date: " + date);
+
             if (!string.IsNullOrEmpty(date))
             {
                 // Get all new auctions, meaning auctions that are created(or updated) after the date that was passed in the query string
