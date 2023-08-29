@@ -1,4 +1,5 @@
 using AuctionService.Data;
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,6 +10,15 @@ builder.Services.AddControllers();
 builder.Services.AddDbContext<AuctionDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 // Register the ampping we created for the DTOs to the container
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+// Register the MassTransit service (for RabbitMQ)
+builder.Services.AddMassTransit(x =>
+{
+    // Connect MassTransit to RabbitMQ over localhost
+    x.UsingRabbitMq((context, config) =>
+    {
+        config.ConfigureEndpoints(context);
+    });
+});
 var app = builder.Build();
 
 // Configure the HTTP request pipeline. Here we will add Middleware (for inbound or outbound requests)
@@ -18,11 +28,14 @@ app.UseAuthorization();
 app.MapControllers();
 
 // Seed the database (if needed)
-try {
+try
+{
 
     Dbinitializer.InitDb(app);
 
-} catch (Exception e) {
+}
+catch (Exception e)
+{
     Console.WriteLine(e);
     throw;
 }

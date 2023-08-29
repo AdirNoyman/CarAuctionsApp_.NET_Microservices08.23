@@ -18,6 +18,11 @@ services:
       - MONGO_INITDB_ROOT_PASSWORD=adir12345
     volumes:
       - mongodata:/var/lib/mongodb/data
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - 5672:5672
+      - 15672:15672
 volumes:
   pgdata:
   mongodata:

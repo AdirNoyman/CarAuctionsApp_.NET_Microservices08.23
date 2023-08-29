@@ -1,4 +1,5 @@
 using System.Net;
+using MassTransit;
 using MongoDB.Driver;
 using MongoDB.Entities;
 using Polly;
@@ -13,6 +14,15 @@ var builder = WebApplication.CreateBuilder(args);
 // Register services
 builder.Services.AddControllers();
 builder.Services.AddHttpClient<AuctionServiceHttpClient>().AddPolicyHandler(GetRetryPolicy());
+// Register the MassTransit service (for RabbitMQ)
+builder.Services.AddMassTransit(x =>
+{
+    // Connect MassTransit to RabbitMQ over localhost
+    x.UsingRabbitMq((context, config) =>
+    {
+        config.ConfigureEndpoints(context);
+    });
+});
 
 var app = builder.Build();
 
