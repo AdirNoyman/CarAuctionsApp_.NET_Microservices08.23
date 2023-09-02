@@ -9,6 +9,8 @@ using AuctionService.DTOs;
 using Microsoft.EntityFrameworkCore;
 using AuctionService.Entities;
 using AutoMapper.QueryableExtensions;
+using MassTransit;
+using Contracts;
 
 namespace AuctionService.Controllers
 {
@@ -18,11 +20,13 @@ namespace AuctionService.Controllers
     {
         private readonly AuctionDbContext _context;
         private readonly IMapper _mapper;
+        private readonly IPublishEndpoint _publishEndpoint;
 
-        public AuctionsController(AuctionDbContext context, IMapper mapper)
+        public AuctionsController(AuctionDbContext context, IMapper mapper, IPublishEndpoint publishEndpoint)
         {
             _context = context;
             _mapper = mapper;
+            _publishEndpoint = publishEndpoint;
         }
 
         // Get all auctions
@@ -60,6 +64,7 @@ namespace AuctionService.Controllers
             return Ok(_mapper.Map<AuctionDto>(auction));
         }
 
+        // Create a new auction
         [HttpPost]
         public async Task<ActionResult<AuctionDto>> CreateAuction(CreateAuctionDto createAuctionDto)
         {
@@ -72,15 +77,18 @@ namespace AuctionService.Controllers
             // Save the changes to the database. It will return ont intger for each successful change
             var result = await _context.SaveChangesAsync() > 0;
 
+            var newAuctionCreatedDto = _mapper.Map<AuctionDto>(auction);
+            // Convert the new auction to the auction created contract 
+            await _publishEndpoint.Publish(_mapper.Map<AuctionCreated>(newAuctionCreatedDto));
+
+
             if (!result)
             {
                 return BadRequest("Failed to save changes to the DB");
             }
 
-            var auctionDto = _mapper.Map<AuctionDto>(auction);
-
             // return the auction location
-            return CreatedAtAction(nameof(GetAuctionById), new { id = auctionDto.Id }, auctionDto);
+            return CreatedAtAction(nameof(GetAuctionById), new { id = auction.Id }, newAuctionCreatedDto);
 
 
         }
