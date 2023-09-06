@@ -74,12 +74,13 @@ namespace AuctionService.Controllers
             auction.Seller = "test";
             // Add the auction entity to the context memory
             _context.Auctions.Add(auction);
-            // Save the changes to the database. It will return ont intger for each successful change
-            var result = await _context.SaveChangesAsync() > 0;
 
             var newAuctionCreatedDto = _mapper.Map<AuctionDto>(auction);
-            // Convert the new auction to the auction created contract 
+            // Convert the new auction to the auction created contract and publish it to the broker service (rabbitMQ)
             await _publishEndpoint.Publish(_mapper.Map<AuctionCreated>(newAuctionCreatedDto));
+
+            // Save the changes to the database, only after succsessful publish to the message broker. It will return one intger for each successful change
+            var result = await _context.SaveChangesAsync() > 0;
 
 
             if (!result)

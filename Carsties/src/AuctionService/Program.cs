@@ -13,6 +13,15 @@ builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 // Register the MassTransit service (for RabbitMQ)
 builder.Services.AddMassTransit(x =>
 {
+    // Handle a situation where the MessageBroker(RabbitMQ) is down, by trying to check every 10 seconds if the there is an event still waiting in the outbox queue to be sent to the broker. If yes, then try to send it again.
+    x.AddEntityFrameworkOutbox<AuctionDbContext>(o =>
+    {
+        o.QueryDelay = TimeSpan.FromMilliseconds(10);
+        o.UsePostgres();
+        o.UseBusOutbox();
+
+    });
+
     // Connect MassTransit to RabbitMQ over localhost
     x.UsingRabbitMq((context, config) =>
     {
