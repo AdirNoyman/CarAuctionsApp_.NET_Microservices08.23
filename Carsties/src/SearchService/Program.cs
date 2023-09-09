@@ -30,6 +30,12 @@ builder.Services.AddMassTransit(x =>
     // Connect MassTransit to RabbitMQ over localhost
     x.UsingRabbitMq((context, config) =>
     {
+        config.ReceiveEndpoint("search-auction-created", e =>
+        {
+            // Configure the consumer for doing retries to process (save to mongoDB) the event of auction created (try 5 times every 5 seconds), in a case where the search service failed
+            e.UseMessageRetry(r => r.Interval(5, 5));
+            e.ConfigureConsumer<AuctionCreatedConsumer>(context);
+        });
         config.ConfigureEndpoints(context);
     });
 });
