@@ -27,6 +27,10 @@ namespace SearchService.Consumers
             // Get the Item that was created, from the auction created event
             var item = _mapper.Map<Models.Item>(context.Message);
 
+            // Mocking fault for learning purposes
+            if (item.Model == "Foo") throw new ArgumentException($"The model {item.Model} is not allowed");
+
+
             // Save the item to the search database
             await item.SaveAsync();
 

@@ -1,3 +1,4 @@
+using AuctionService.Consumers;
 using AuctionService.Data;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
@@ -13,7 +14,7 @@ builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 // Register the MassTransit service (for RabbitMQ)
 builder.Services.AddMassTransit(x =>
 {
-    // Handle a situation where the MessageBroker(RabbitMQ) is down, by trying to check every 10 seconds if the there is an event still waiting in the outbox queue to be sent to the broker. If yes, then try to send it again.
+    // Handle a situation where the MessageBroker(RabbitMQ Service bus) is down, by trying to check every 10 seconds if the there is an event still waiting in the outbox queue to be sent to the broker. If yes, then try to send it again.
     x.AddEntityFrameworkOutbox<AuctionDbContext>(o =>
     {
         o.QueryDelay = TimeSpan.FromMilliseconds(10);
@@ -21,6 +22,10 @@ builder.Services.AddMassTransit(x =>
         o.UseBusOutbox();
 
     });
+
+    x.AddConsumersFromNamespaceContaining<AuctionCreatedFaultConsumer>();
+
+    x.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("auction", false)); //
 
     // Connect MassTransit to RabbitMQ over localhost
     x.UsingRabbitMq((context, config) =>

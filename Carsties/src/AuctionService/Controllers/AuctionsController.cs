@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using AuctionService.Data;
 using AutoMapper;
@@ -112,6 +108,8 @@ namespace AuctionService.Controllers
             auction.Item.Mileage = updateAuctionDto.Mileage ?? auction.Item.Mileage;
             auction.Item.Year = updateAuctionDto.Year ?? auction.Item.Year;
 
+            // Convert the updated auction to the auction updated contract and publish it to the broker service (rabbitMQ)
+            await _publishEndpoint.Publish(_mapper.Map<AuctionUpdated>(auction));
 
             var result = await _context.SaveChangesAsync() > 0;
 
