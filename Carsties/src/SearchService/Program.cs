@@ -49,6 +49,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+
 // Start and run the Search app even if the Auction service is not available at that time (of starting).
 app.Lifetime.ApplicationStarted.Register(async () =>
 {

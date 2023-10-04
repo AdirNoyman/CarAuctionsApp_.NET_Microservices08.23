@@ -12,6 +12,8 @@ namespace SearchService.RequestHelpers
     {
         public MappingProfiles()
         {
+
+            // Map the AuctionCreated DTO and AuctionUpdated DTO events to the Item entity            
             CreateMap<AuctionCreated, Item>();
             CreateMap<AuctionUpdated, Item>();
         }

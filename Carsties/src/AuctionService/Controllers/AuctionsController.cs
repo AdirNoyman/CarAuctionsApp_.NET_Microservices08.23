@@ -68,7 +68,7 @@ namespace AuctionService.Controllers
             var auction = _mapper.Map<Auction>(createAuctionDto);
             // TODO: Add current session user, as the one who sells this auction item
             auction.Seller = "test";
-            // Add the auction entity to the context memory
+            // Add the auction entity to the memory context 
             _context.Auctions.Add(auction);
 
             var newAuctionCreatedDto = _mapper.Map<AuctionDto>(auction);
@@ -77,7 +77,6 @@ namespace AuctionService.Controllers
 
             // Save the changes to the database, only after succsessful publish to the message broker. It will return one intger for each successful change
             var result = await _context.SaveChangesAsync() > 0;
-
 
             if (!result)
             {
