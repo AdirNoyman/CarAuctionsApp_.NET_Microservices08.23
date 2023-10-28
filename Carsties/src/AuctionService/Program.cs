@@ -1,6 +1,7 @@
 using AuctionService.Consumers;
 using AuctionService.Data;
 using MassTransit;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -33,10 +34,24 @@ builder.Services.AddMassTransit(x =>
         config.ConfigureEndpoints(context);
     });
 });
+
+// Add configuartion for the Auth service
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        // Identityfiaction authorety is the Identity server
+        options.Authority = builder.Configuration["IdentityServiceUrl"];
+        // Running on http not https
+        options.RequireHttpsMetadata = false;
+        options.TokenValidationParameters.ValidateAudience = false;
+        options.TokenValidationParameters.NameClaimType = "username";
+
+    });
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline. Here we will add Middleware (for inbound or outbound requests)
-
+app.UseAuthentication();
 app.UseAuthorization();
 // Map the routes to the controllers they belong to
 app.MapControllers();
