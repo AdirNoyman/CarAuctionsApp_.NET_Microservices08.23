@@ -7,6 +7,7 @@ using AuctionService.Entities;
 using AutoMapper.QueryableExtensions;
 using MassTransit;
 using Contracts;
+using Microsoft.AspNetCore.Authorization;
 
 namespace AuctionService.Controllers
 {
@@ -61,13 +62,15 @@ namespace AuctionService.Controllers
         }
 
         // Create a new auction
+        [Authorize]
         [HttpPost]
         public async Task<ActionResult<AuctionDto>> CreateAuction(CreateAuctionDto createAuctionDto)
         {
             // create a new instance of auction entity
             var auction = _mapper.Map<Auction>(createAuctionDto);
-            // TODO: Add current session user, as the one who sells this auction item
-            auction.Seller = "test";
+            // Add current session user, as the one who sells this auction item
+            auction.Seller = User.Identity.Name;
+
             // Add the auction entity to the memory context 
             _context.Auctions.Add(auction);
 
@@ -89,17 +92,16 @@ namespace AuctionService.Controllers
 
         }
 
+        [Authorize]
         [HttpPut("{id}")]
         public async Task<ActionResult> UpdateAuction(Guid id, UpdateAuctionDto updateAuctionDto)
         {
             var auction = await _context.Auctions.Include(x => x.Item).FirstOrDefaultAsync(x => x.Id == id);
 
-            if (auction == null)
-            {
-                return NotFound();
-            }
+            if (auction == null) NotFound();
 
-            // TODO: Check if the user is the seller of the auction, so we know if he is allowed to update this auction item
+            // Check if the user is the seller of the auction, so we know if he is allowed to update this auction item
+            if (auction.Seller != User.Identity.Name) Forbid();
 
             auction.Item.Make = updateAuctionDto.Make ?? auction.Item.Make;
             auction.Item.Model = updateAuctionDto.Model ?? auction.Item.Model;
@@ -120,6 +122,7 @@ namespace AuctionService.Controllers
             return Ok();
         }
 
+        [Authorize]
         [HttpDelete("{id}")]
         public async Task<ActionResult> DeleteAuction(Guid id)
         {
@@ -127,7 +130,8 @@ namespace AuctionService.Controllers
 
             if (auction == null) return NotFound();
 
-            // TODO: Check if the user is the seller of the auction, so we know if he is allowed to delete this auction item
+            // Check if the user is the seller of the auction, so we know if he is allowed to delete this auction item
+            if (auction.Seller != User.Identity.Name) Forbid();
 
             _context.Auctions.Remove(auction);
 
