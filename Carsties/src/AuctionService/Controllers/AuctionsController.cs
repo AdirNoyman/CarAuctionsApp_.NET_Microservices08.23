@@ -98,10 +98,10 @@ namespace AuctionService.Controllers
         {
             var auction = await _context.Auctions.Include(x => x.Item).FirstOrDefaultAsync(x => x.Id == id);
 
-            if (auction == null) NotFound();
+            if (auction == null) return NotFound();
 
             // Check if the user is the seller of the auction, so we know if he is allowed to update this auction item
-            if (auction.Seller != User.Identity.Name) Forbid();
+            if (auction.Seller != User.Identity.Name) return Forbid();
 
             auction.Item.Make = updateAuctionDto.Make ?? auction.Item.Make;
             auction.Item.Model = updateAuctionDto.Model ?? auction.Item.Model;
@@ -131,7 +131,7 @@ namespace AuctionService.Controllers
             if (auction == null) return NotFound();
 
             // Check if the user is the seller of the auction, so we know if he is allowed to delete this auction item
-            if (auction.Seller != User.Identity.Name) Forbid();
+            if (auction.Seller != User.Identity.Name) return Forbid();
 
             _context.Auctions.Remove(auction);
 
